@@ -115,7 +115,37 @@ Without the `registerDomainSeparator` call, EIP-712 transactions will fail with 
 
 <br><hr>
 
-#### Step 5. Start the gas relayer
+#### Step 5. Create and fund the gas paying keys
+
+Download `avalanche-kms` from [avalanche-ops release page](https://github.com/ava-labs/avalanche-ops/releases/tag/latest):
+
+```bash
+# to check the balance of "ewoq" key
+cd ${HOME}/avalanche-ops
+./target/release/avalanche-kms create \
+--region=ap-northeast-2 \
+--key-name-prefix aws-gas-relayer-gas-payer \
+--keys 10 \
+--evm-chain-rpc-url http://127.0.0.1:9650/ext/bc/C/rpc \
+--evm-funding-hotkey 56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027 \
+--evm-funding-amount-in-avax "999999999"
+
+# fetch the balance of the test "ewoq" key account (should be non-zero)
+cd ${HOME}/avalanche-ops
+./target/release/avalanche-kms evm-balance \
+--chain-rpc-url http://127.0.0.1:9650/ext/bc/C/rpc \
+--address 0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC
+```
+
+Or manually create AWS KMS keys and fund them.
+
+TODO: create with KMS grants
+
+
+
+<br><hr>
+
+#### Step 6. Start the gas relayer
 
 Please contact the Avalanche support team.
 
@@ -123,7 +153,7 @@ Please contact the Avalanche support team.
 
 <br><hr>
 
-#### Step 6. Deploy test counter contract
+#### Step 7. Deploy test counter contract
 
 Deploy a simple test `GaslessCounter` contract that is EIP-2771 compliant:
 
@@ -150,7 +180,7 @@ Transaction hash: ...
 
 <br><hr>
 
-#### Step 7. Test counter contract
+#### Step 8. Test counter contract
 
 Make sure the key without any balance cannot increment/decrement the counter, not able to pay the gas fees:
 

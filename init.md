@@ -43,3 +43,13 @@ forge-std/=lib/forge-std/src/
 hardhat/=lib/forge-std/src/
 EOF
 ```
+
+To update dependencies:
+
+```bash
+cd ${HOME}/avalanche-evm-gasless-transaction
+git submodule update --init --recursive
+
+cd ${HOME}/avalanche-evm-gasless-transaction
+forge update
+```

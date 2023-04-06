@@ -10,10 +10,7 @@ name = "avalanche-evm-gasless-transaction"
 path = "src/main.rs"
 
 [dependencies]
-avalanche-types = { version = "0.0.334", features = ["jsonrpc_client", "evm", "wallet", "wallet_evm", "kms_aws"] } # https://crates.io/crates/avalanche-types
-aws-manager = { version = "0.25.3", features = ["cloudwatch", "kms", "s3"] } # https://crates.io/crates/aws-manager
-bytes = "1.4.0"
-chrono = "0.4.24"
+avalanche-types = { version = "0.0.334", features = ["jsonrpc_client", "evm", "wallet", "wallet_evm"] } # https://crates.io/crates/avalanche-types
 clap = { version = "4.2.1", features = ["cargo", "derive"] }
 crossterm = "0.26.1"
 dialoguer = "0.10.3"
@@ -25,14 +22,8 @@ ethers-signers = "=2.0.2"
 hex = "0.4.3"
 log = "0.4.17"
 primitive-types = "0.12.1" # https://crates.io/crates/primitive-types
-prometheus-client = "0.20.0"
-random-manager = "0.0.5"
-serde = { version = "1.0.159", features = ["derive"] } # https://github.com/serde-rs/serde/releases
 serde_json = "1.0.95" # https://github.com/serde-rs/json/releases
-serde_with = { version = "2.3.2", features = ["hex"] }
-serde_yaml = "0.9.21" # https://github.com/dtolnay/serde-yaml/releases
 tokio = { version = "1.27.0", features = ["full"] }
-warp = "0.3.4"
 
 # https://github.com/cross-rs/cross/wiki/Recipes#openssl
 openssl = { version = "0.10", features = ["vendored"] }

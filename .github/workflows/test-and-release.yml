@@ -1,0 +1,281 @@
+name: Test and release
+
+# ref. https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "*"
+  pull_request:
+
+permissions:
+  contents: write
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  contract_tests:
+    strategy:
+      fail-fast: true
+
+    name: Foundry project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        run: |
+          forge test -vvv
+        id: test
+
+  static_analysis:
+    name: Static analysis (lint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          profile: minimal
+          components: rustfmt, clippy
+          override: true
+
+      - name: Check Rust version
+        run: rustc --version
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          cache-on-failure: true
+
+      - name: Run static analysis tests
+        shell: bash
+        run: scripts/tests.lint.sh
+
+  check_cargo_unused:
+    name: Check Cargo unused
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # or use "abelfodil/protoc-action@v1"
+      # ref. https://github.com/hyperium/tonic/issues/1047#issuecomment-1222508191
+      - name: Install protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          version: "3.x"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          profile: minimal
+          components: rustfmt, clippy
+          override: true
+
+      - name: Check Rust version
+        run: rustc --version
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          cache-on-failure: true
+
+      - name: Check unused Cargo dependencies
+        shell: bash
+        run: scripts/tests.unused.sh
+
+  unit_tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # or use "abelfodil/protoc-action@v1"
+      # ref. https://github.com/hyperium/tonic/issues/1047#issuecomment-1222508191
+      - name: Install protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          version: "3.x"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Check Rust version
+        run: rustc --version
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          cache-on-failure: true
+
+      - name: Run unit tests
+        run: scripts/tests.unit.sh
+
+  release:
+    name: Release ${{ matrix.job.target }} (${{ matrix.job.os }})
+    runs-on: ${{ matrix.job.os }}
+    needs: [contract_tests, static_analysis, unit_tests]
+    strategy:
+      matrix:
+        job:
+          # use the same OS version as EC2/cloud host
+          # otherwise, it can fail with:
+          # error while loading shared libraries: libssl.so.3: cannot open shared object file: No such file or directory
+          # ref. https://github.com/sfackler/rust-openssl/issues/1748
+          # ref. https://doc.rust-lang.org/nightly/rustc/platform-support.html
+          - os: ubuntu-20.04
+            platform: linux
+            target: x86_64-unknown-linux-gnu
+
+          # https://github.com/sharkdp/fd/blob/master/.github/workflows/CICD.yml
+          #
+          # may require manual builds without cross-linker for linux
+          # https://users.rust-lang.org/t/cant-cross-compile-project-with-openssl/70922
+          - os: ubuntu-20.04
+            platform: linux
+            target: aarch64-unknown-linux-gnu
+            use-cross: true
+
+          - os: macos-latest
+            platform: darwin
+            target: x86_64-apple-darwin
+
+          - os: macos-latest
+            platform: darwin
+            target: aarch64-apple-darwin
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # https://github.com/sharkdp/fd/blob/master/.github/workflows/CICD.yml
+      # https://github.com/cross-rs/cross/wiki/Recipes#openssl
+      - name: Install OS dependencies
+        shell: bash
+        run: |
+          case ${{ matrix.job.target }} in
+            arm-unknown-linux-*) sudo apt-get -y update ; sudo apt-get -y install gcc-arm-linux-gnueabihf ;;
+            aarch64-unknown-linux-gnu) sudo apt-get -y update ; sudo apt-get -y install gcc-aarch64-linux-gnu ;;
+          esac
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.job.target }}
+          override: true
+
+      - name: Show version information (Rust, cargo, GCC)
+        shell: bash
+        run: |
+          gcc --version || true
+          rustup -V
+          rustup toolchain list
+          rustup default
+          cargo -V
+          rustc -V
+
+      - name: Set cargo cmd
+        shell: bash
+        run: echo "CARGO_CMD=cargo" >> $GITHUB_ENV
+
+      - name: Set cargo cmd to cross
+        shell: bash
+        if: ${{ matrix.job.use-cross == true }}
+        run: echo "CARGO_CMD=cross" >> $GITHUB_ENV
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.job.os }}-${{ matrix.job.target }}
+
+      - name: Install cross
+        if: ${{ matrix.job.use-cross == true }}
+        run: cargo install cross
+
+      - name: Build
+        run: ${{ env.CARGO_CMD }} build --release --target=${{ matrix.job.target }} --bin avalanche-evm-gasless-transaction
+
+      - name: Compress binaries
+        id: release_artifacts
+        env:
+          PLATFORM_NAME: ${{ matrix.job.platform }}
+          TARGET: ${{ matrix.job.target }}
+        shell: bash
+        run: |
+          if [ "$PLATFORM_NAME" == "linux" ]; then
+
+            cp ./target/${TARGET}/release/avalanche-evm-gasless-transaction avalanche-evm-gasless-transaction.${TARGET}
+            echo "file_name_avalanche_evm_gasless_transaction=avalanche-evm-gasless-transaction.${TARGET}" >> $GITHUB_OUTPUT
+            tar -czvf avalanche-evm-gasless-transaction.${TARGET}.tar.gz -C ./target/${TARGET}/release avalanche-evm-gasless-transaction
+            echo "file_name_avalanche_evm_gasless_transaction_tar_gz=avalanche-evm-gasless-transaction.${TARGET}.tar.gz" >> $GITHUB_OUTPUT
+
+          elif [ "$PLATFORM_NAME" == "darwin" ]; then
+
+            cp ./target/${TARGET}/release/avalanche-evm-gasless-transaction avalanche-evm-gasless-transaction.${TARGET}
+            echo "file_name_avalanche_evm_gasless_transaction=avalanche-evm-gasless-transaction.${TARGET}" >> $GITHUB_OUTPUT
+            gtar -czvf avalanche-evm-gasless-transaction.${TARGET}.tar.gz -C ./target/${TARGET}/release avalanche-evm-gasless-transaction
+            echo "file_name_avalanche_evm_gasless_transaction_tar_gz=avalanche-evm-gasless-transaction.${TARGET}.tar.gz" >> $GITHUB_OUTPUT
+
+          else
+
+            echo "skipping $PLATFORM_NAME"
+
+          fi
+
+      # release tip from latest commits
+      # https://github.com/softprops/action-gh-release
+      # https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+      - name: Release latest
+        uses: softprops/action-gh-release@v1
+        if: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          name: Latest release
+          tag_name: latest
+          draft: false
+          prerelease: false
+          body: Latest builds from the last commit.
+          files: |
+            ${{ steps.release_artifacts.outputs.file_name_avalanche_evm_gasless_transaction }}
+            ${{ steps.release_artifacts.outputs.file_name_avalanche_evm_gasless_transaction_tar_gz }}
+
+      # release only for tags
+      # https://github.com/softprops/action-gh-release
+      # https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+      - name: Release tag
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          body: Release builds for ${{ github.ref_name }}.
+          files: |
+            ${{ steps.release_artifacts.outputs.file_name_avalanche_evm_gasless_transaction }}
+            ${{ steps.release_artifacts.outputs.file_name_avalanche_evm_gasless_transaction_tar_gz }}

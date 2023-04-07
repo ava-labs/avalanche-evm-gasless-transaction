@@ -5,7 +5,6 @@
 
 TODOs
 - CLI to create AWS KMS keys + grants for cross-account access
-- Javascript example for EIP-712 message signing
 
 
 
@@ -188,7 +187,7 @@ Transaction hash: ...
 
 <br><hr>
 
-#### Step 8. Test counter contract
+#### Step 8. Test counter contract in Rust
 
 Make sure the key without any balance cannot increment/decrement the counter, not able to pay the gas fees:
 
@@ -252,3 +251,83 @@ cast call \
 "getLast()"
 # 0x00000000000000000000000054ba2b96d1318900f3d1e893c9f2048458ed9120
 ```
+
+The above `avalanche-evm-gasless-transaction gasless-counter-increment` commands creates and signs the message as follows in Rust, and sends it to the gas relayer server:
+
+```json
+{
+    "forwardRequest": {
+        "domain": {
+            "name": "my name",
+            "version": "1",
+            "chainId": "0xa868",
+            "verifyingContract": "0x52c84043cd9c865236f11d9fc9f56aa003c1f922"
+        },
+        "types": {
+            "EIP712Domain": [
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "version",
+                    "type": "string"
+                },
+                {
+                    "name": "chainId",
+                    "type": "uint256"
+                },
+                {
+                    "name": "verifyingContract",
+                    "type": "address"
+                }
+            ],
+            "Message": [
+                {
+                    "name": "from",
+                    "type": "address"
+                },
+                {
+                    "name": "to",
+                    "type": "address"
+                },
+                {
+                    "name": "value",
+                    "type": "uint256"
+                },
+                {
+                    "name": "gas",
+                    "type": "uint256"
+                },
+                {
+                    "name": "nonce",
+                    "type": "uint256"
+                },
+                {
+                    "name": "data",
+                    "type": "bytes"
+                },
+                {
+                    "name": "validUntilTime",
+                    "type": "uint256"
+                }
+            ]
+        },
+        "primaryType": "Message",
+        "message": {
+            "data": "d09de08a",
+            "from": "0xc886c5a4939c8835bf7bf643f3dbcadc6eb242d1",
+            "gas": "0x1d0f6",
+            "nonce": "0x0",
+            "to": "0x5db9a7629912ebf95876228c24a848de0bfb43a9",
+            "validUntilTime": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "value": "0x0"
+        }
+    },
+    "metadata": {
+        "signature": "914b460ab5dda9bbfd0675913b19c3c0e55a0886698dfc07f0f6dd4c28e449363826e26c4fa67bde3ee8a832e0a2a1f47a471ce2ac00b0856e81b2acc61af0dc1b"
+    }
+}
+```
+
+See [MetaMask/eth-sig-util/sign-typed-data.ts](https://github.com/MetaMask/eth-sig-util/blob/main/src/sign-typed-data.ts) for a TypeScript EIP-712 message signing example.

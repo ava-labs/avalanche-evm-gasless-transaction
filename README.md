@@ -128,6 +128,7 @@ Download `avalanche-kms` from [avalanche-ops release page](https://github.com/av
 
 ```bash
 # to check the balance of "ewoq" key
+# to create keys with cross account grants, use --grantee-principal (optional)
 cd ${HOME}/avalanche-ops
 ./target/release/avalanche-kms create \
 --region=ap-northeast-2 \
@@ -135,7 +136,8 @@ cd ${HOME}/avalanche-ops
 --keys 10 \
 --evm-chain-rpc-url http://127.0.0.1:9650/ext/bc/C/rpc \
 --evm-funding-hotkey 56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027 \
---evm-funding-amount-in-avax "999999999"
+--evm-funding-amount-in-avax "999999999" \
+--grantee-principal ...
 
 # fetch the balance of the test "ewoq" key account (should be non-zero)
 cd ${HOME}/avalanche-ops
@@ -145,8 +147,6 @@ cd ${HOME}/avalanche-ops
 ```
 
 Or manually create AWS KMS keys and fund them.
-
-TODO: create with KMS grants
 
 
 

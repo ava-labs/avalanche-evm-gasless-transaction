@@ -31,6 +31,9 @@ git clone git@github.com:ava-labs/avalanche-evm-gasless-transaction.git
 
 cd ${HOME}/avalanche-evm-gasless-transaction
 git submodule update --init --recursive
+
+cd ${HOME}/avalanche-evm-gasless-transaction
+forge update
 ```
 
 

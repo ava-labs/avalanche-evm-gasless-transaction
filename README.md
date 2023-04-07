@@ -34,6 +34,11 @@ git submodule update --init --recursive
 
 cd ${HOME}/avalanche-evm-gasless-transaction
 forge update
+
+cd ${HOME}/avalanche-evm-gasless-transaction
+# vi ./lib/gsn/packages/contracts/src/forwarder/Forwarder.sol
+cp ./lib/gsn/packages/contracts/src/forwarder/Forwarder.sol src/Forwarder.sol
+cp ./lib/gsn/packages/contracts/src/forwarder/IForwarder.sol src/IForwarder.sol
 ```
 
 

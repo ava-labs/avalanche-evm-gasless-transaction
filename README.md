@@ -1,16 +1,8 @@
-
-### Avalanche EVM gasless transaction
+# Avalanche EVM gasless transaction
 
 [ERC-2771](https://eips.ethereum.org/EIPS/eip-2771) (gasless transaction) on Avalanche EVM chains.
 
-TODOs
-- CLI to create AWS KMS keys + grants for cross-account access
-
-
-
-<br><hr>
-
-#### Step 1. Install dependencies
+## Step 1. Install dependencies
 
 Install [Foundry](https://github.com/foundry-rs/foundry#installation), and make sure the following works:
 
@@ -19,11 +11,7 @@ forge --version
 cast --version
 ```
 
-
-
-<br><hr>
-
-#### Step 2. Download trusted forwarder contract
+## Step 2. Download trusted forwarder contract
 
 ```bash
 git clone git@github.com:ava-labs/avalanche-evm-gasless-transaction.git
@@ -40,11 +28,7 @@ cp ./lib/gsn/packages/contracts/src/forwarder/Forwarder.sol src/Forwarder.sol
 cp ./lib/gsn/packages/contracts/src/forwarder/IForwarder.sol src/IForwarder.sol
 ```
 
-
-
-<br><hr>
-
-#### Step 3. Deploy trusted forwarder contract
+## Step 3. Deploy trusted forwarder contract
 
 To deploy the trusted forwarder contract, you need existing EVM RPC URLs.
 
@@ -74,7 +58,7 @@ src/Forwarder.sol:Forwarder
 
 Sample outputs are:
 
-```
+```yaml
 Deployer: 0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC
 Deployed to: 0x52C84043CD9c865236f11d9Fc9F56aa003c1f922
 Transaction hash: ...
@@ -82,11 +66,7 @@ Transaction hash: ...
 
 In the example above, the trusted forwarder contract address is `0x52C84043CD9c865236f11d9Fc9F56aa003c1f922`, which will be required for the following steps (domain separator, type name registration, etc.).
 
-
-
-<br><hr>
-
-#### Step 4. Register domain separator and request type
+## Step 4. Register domain separator and request type
 
 Register the domain separator and request type with the trusted forwarder:
 
@@ -114,15 +94,11 @@ cast send \
 "bytes8 typeSuffixDatadatadatada)"
 ```
 
-Without the `registerDomainSeparator` call, EIP-712 transactions will fail with `FWD: unregistered domain sep`. Without the `registerRequestType` call, EIP-712 transactions will fail with `FWD: unregistered typehash`.
+Without the `registerDomainSeparator` call, EIP-712 transactions will fail with `FWD: unregistered domain sep`. Without the `registerRequestType` call, EIP-712 transactions will fail with `FWD: unregistered typehash`:
 - https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator
 - https://eips.ethereum.org/EIPS/eip-712#rationale-for-domainseparator
 
-
-
-<br><hr>
-
-#### Step 5. Create and fund the gas paying keys
+## Step 5. Create and fund the gas paying keys
 
 Download `avalanche-kms` from [avalanche-ops release page](https://github.com/ava-labs/avalanche-ops/releases/tag/latest):
 
@@ -148,19 +124,11 @@ cd ${HOME}/avalanche-ops
 
 Or manually create AWS KMS keys and fund them.
 
-
-
-<br><hr>
-
-#### Step 6. Start the gas relayer
+## Step 6. Start the gas relayer
 
 Please contact the Avalanche support team.
 
-
-
-<br><hr>
-
-#### Step 7. Deploy test counter contract
+## Step 7. Deploy test counter contract
 
 Deploy a simple test `GaslessCounter` contract that is EIP-2771 compliant:
 
@@ -177,17 +145,13 @@ src/GaslessCounter.sol:GaslessCounter \
 
 Sample outputs are:
 
-```
+```bash
 Deployer: 0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC
 Deployed to: 0x5DB9A7629912EBF95876228C24A848de0bfB43A9
 Transaction hash: ...
 ```
 
-
-
-<br><hr>
-
-#### Step 8. Test counter contract in Rust
+## Step 8. Test counter contract in Rust
 
 Make sure the key without any balance cannot increment/decrement the counter, not able to pay the gas fees:
 
@@ -233,7 +197,7 @@ gasless-counter-increment \
 --domain-name "my domain name" \
 --domain-version "1" \
 --type-name "my type name" \
---type-suffix-data "bytes8 typeSuffixDatadatadatada)" 
+--type-suffix-data "bytes8 typeSuffixDatadatadatada)"
 ```
 
 Confirm that the transactions were successfully processed:
@@ -249,7 +213,7 @@ cast call \
 --rpc-url=http://127.0.0.1:9650/ext/bc/C/rpc \
 0x5DB9A7629912EBF95876228C24A848de0bfB43A9 \
 "getLast()"
-# 0x00000000000000000000000054ba2b96d1318900f3d1e893c9f2048458ed9120
+# 0x00000000000000000000000009cdb41fcec6410a00c7751257c33e9ea0d0c835
 ```
 
 The above `avalanche-evm-gasless-transaction gasless-counter-increment` commands creates and signs the message as follows in Rust, and sends it to the gas relayer server:
@@ -331,3 +295,43 @@ The above `avalanche-evm-gasless-transaction gasless-counter-increment` commands
 ```
 
 See [MetaMask/eth-sig-util/sign-typed-data.ts](https://github.com/MetaMask/eth-sig-util/blob/main/src/sign-typed-data.ts) for a TypeScript EIP-712 message signing example.
+
+## Step 9. Deploy test faucet contract
+
+TODO: not working...
+
+Deploy a simple test `GaslessFaucet` contract that is EIP-2771 compliant:
+
+```bash
+cd ${HOME}/avalanche-evm-gasless-transaction
+forge create \
+--gas-price 700000000000 \
+--priority-gas-price 10000000000 \
+--private-key=56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027 \
+--rpc-url=http://127.0.0.1:9650/ext/bc/C/rpc \
+src/GaslessFaucet.sol:GaslessFaucet \
+--constructor-args 0x52C84043CD9c865236f11d9Fc9F56aa003c1f922
+```
+
+Sample outputs are:
+
+```bash
+Deployer: 0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC
+Deployed to: 0xA4cD3b0Eb6E5Ab5d8CE4065BcCD70040ADAB1F00
+Transaction hash: ...
+```
+
+```bash
+cd ${HOME}/avalanche-evm-gasless-transaction
+./target/release/avalanche-evm-gasless-transaction \
+gasless-faucet-withdraw \
+--gas-relayer-server-rpc-url http://127.0.0.1:9876/rpc \
+--chain-rpc-url http://127.0.0.1:9650/ext/bc/C/rpc \
+--trusted-forwarder-contract-address 0x52C84043CD9c865236f11d9Fc9F56aa003c1f922 \
+--recipient-contract-address 0xA4cD3b0Eb6E5Ab5d8CE4065BcCD70040ADAB1F00 \
+--domain-name "my domain name" \
+--domain-version "1" \
+--type-name "my type name" \
+--type-suffix-data "bytes8 typeSuffixDatadatadatada)" \
+--withdraw-amount-in-hex "0x123456789"
+```

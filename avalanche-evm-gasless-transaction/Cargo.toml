@@ -10,10 +10,10 @@ name = "avalanche-evm-gasless-transaction"
 path = "src/main.rs"
 
 [dependencies]
-avalanche-types = { version = "0.0.334", features = ["jsonrpc_client", "evm", "wallet", "wallet_evm"] } # https://crates.io/crates/avalanche-types
+avalanche-types = { version = "0.0.338", features = ["jsonrpc_client", "evm", "wallet", "wallet_evm"] } # https://crates.io/crates/avalanche-types
 clap = { version = "4.2.1", features = ["cargo", "derive"] }
 crossterm = "0.26.1"
-dialoguer = "0.10.3"
+dialoguer = "0.10.4"
 env_logger = "0.10.0"
 ethers = { version = "=2.0.2", features = ["eip712"] } # https://github.com/gakonst/ethers-rs/releases
 ethers-core = "=2.0.2"

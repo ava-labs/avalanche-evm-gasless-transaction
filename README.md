@@ -122,11 +122,11 @@ cd ${HOME}/avalanche-ops
 --address 0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC
 ```
 
-Or manually create AWS KMS keys and fund them.
+Or manually create or use existing AWS KMS keys, and pre-fund them.
 
 ## Step 6. Start the gas relayer
 
-Please contact the Avalanche support team.
+Please contact the Avalanche support team (with the list of your funded AWS KMS keys).
 
 ## Step 7. Deploy test counter contract
 

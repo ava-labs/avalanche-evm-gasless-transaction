@@ -35,10 +35,10 @@ To deploy the trusted forwarder contract, you need existing EVM RPC URLs.
 If you do not have one yet, run the following local node for testing purposes:
 
 ```bash
-cd ${HOME}/go/src/github.com/ava-labs/avalanchego
+cd ${HOME}/avalanchego
 ./scripts/build.sh
 
-cd ${HOME}/go/src/github.com/ava-labs/avalanchego
+cd ${HOME}/avalanchego
 ./build/avalanchego \
 --network-id=local \
 --staking-enabled=false \

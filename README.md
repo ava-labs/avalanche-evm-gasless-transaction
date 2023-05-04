@@ -35,10 +35,10 @@ To deploy the trusted forwarder contract, you need existing EVM RPC URLs.
 If you do not have one yet, run the following local node for testing purposes:
 
 ```bash
-cd ${HOME}/avalanchego
+cd ${HOME}/go/src/github.com/ava-labs/avalanchego
 ./scripts/build.sh
 
-cd ${HOME}/avalanchego
+cd ${HOME}/go/src/github.com/ava-labs/avalanchego
 ./build/avalanchego \
 --network-id=local \
 --staking-enabled=false \
@@ -184,13 +184,13 @@ cast call \
 "getLast()"
 ```
 
-Now send the gasless transaction (e.g., http://127.0.0.1:9876/rpc is the gas relayer server RPC URL):
+Now send the gasless transaction (e.g., http://127.0.0.1:9876/rpc-sync is the gas relayer server RPC URL):
 
 ```bash
 cd ${HOME}/avalanche-evm-gasless-transaction
 ./target/release/avalanche-evm-gasless-transaction \
 gasless-counter-increment \
---gas-relayer-server-rpc-url http://127.0.0.1:9876/rpc \
+--gas-relayer-server-rpc-url http://127.0.0.1:9876/rpc-sync \
 --chain-rpc-url http://127.0.0.1:9650/ext/bc/C/rpc \
 --trusted-forwarder-contract-address 0x52C84043CD9c865236f11d9Fc9F56aa003c1f922 \
 --recipient-contract-address 0x5DB9A7629912EBF95876228C24A848de0bfB43A9 \
@@ -325,7 +325,7 @@ Transaction hash: ...
 cd ${HOME}/avalanche-evm-gasless-transaction
 ./target/release/avalanche-evm-gasless-transaction \
 gasless-faucet-withdraw \
---gas-relayer-server-rpc-url http://127.0.0.1:9876/rpc \
+--gas-relayer-server-rpc-url http://127.0.0.1:9876/rpc-sync \
 --chain-rpc-url http://127.0.0.1:9650/ext/bc/C/rpc \
 --trusted-forwarder-contract-address 0x52C84043CD9c865236f11d9Fc9F56aa003c1f922 \
 --recipient-contract-address 0xA4cD3b0Eb6E5Ab5d8CE4065BcCD70040ADAB1F00 \

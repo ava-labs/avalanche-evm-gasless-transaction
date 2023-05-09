@@ -16,8 +16,16 @@ contract GaslessFaucet is ERC2771Recipient {
         // Limit withdrawal amount
         require(withdraw_amount <= 100000000000000000);
 
+        // Check if the contract has enough balance
+        require(
+            address(this).balance >= withdraw_amount,
+            "Insufficient contract balance"
+        );
+
         // Send the amount to the address that requested it
-        (bool success, ) = payable(_msgSender()).call{value: withdraw_amount}("");
+        (bool success, ) = payable(_msgSender()).call{value: withdraw_amount}(
+            ""
+        );
         require(success, "withdraw failed");
     }
 }

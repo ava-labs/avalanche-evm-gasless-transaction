@@ -18,7 +18,6 @@ contract GaslessFaucet is ERC2771Recipient {
 
         // Send the amount to the address that requested it
         (bool success, ) = payable(_msgSender()).call{value: withdraw_amount}("");
-        require(success, "Transfer failed.");
-
+        require(success, "withdraw failed");
     }
 }
